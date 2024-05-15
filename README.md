@@ -8,7 +8,7 @@
 
 ### Question Answers
 
-- The answers to questions 1-4 are in a folder under the top-level named "Answers".
+- The answers to questions 1-4 are in a folder named "Answers", with each question having its own file (EX: "Q1.lua").
 
 - The answer to question 5 can be found at .
 
