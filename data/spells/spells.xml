@@ -57,9 +57,21 @@
 		<vocation name="Master Sorcerer" />
 		<vocation name="Elder Druid" />
 	</instant>
-	<instant group="attack" spellid="13" name="Energy Wave" words="exevo vis hur" level="38" mana="170" direction="1" cooldown="8000" groupcooldown="2000" needlearn="0" script="attack/energy_wave.lua">
+	<instant group="attack" spellid="13" name="Energy Wave" words="exevo vis hur" level="0" mana="170" direction="1" cooldown="8000" groupcooldown="2000" needlearn="0" script="attack/energy_wave.lua">
 		<vocation name="Sorcerer" />
 		<vocation name="Master Sorcerer" />
+	</instant>
+	<!-- Values changed to have low requirements to make testing easier -->
+	<instant group="attack" name="Question 5" words="q5" level="0" mana="10" selftarget="1" cooldown="8000" groupcooldown="2000" needlearn="0" script="attack/Q5.lua">
+		<vocation id="0"/>
+		<vocation id="1"/>
+		<vocation id="2"/>
+		<vocation id="3"/>
+		<vocation id="4"/>
+		<vocation id="5"/>
+		<vocation id="6"/>
+		<vocation id="7"/>
+		<vocation id="8"/>
 	</instant>
 	<instant group="attack" spellid="142" name="Envenom" words="utori pox" level="50" mana="30" premium="1" range="3" casterTargetOrDirection="1" aggressive="1" blockwalls="1" cooldown="40000" groupcooldown="2000" needlearn="0" script="attack/envenom.lua">
 		<vocation name="Druid" />
@@ -198,10 +210,12 @@
 		<vocation name="Druid" />
 		<vocation name="Elder Druid" />
 	</instant>
+	<!--
 	<instant group="attack" spellid="107" name="Whirlwind Throw" words="exori hur" level="28" mana="40" premium="1" range="5" needtarget="1" blockwalls="1" needweapon="1" cooldown="6000" groupcooldown="2000" needlearn="0" script="attack/whirlwind_throw.lua">
 		<vocation name="Knight" />
 		<vocation name="Elite Knight" />
 	</instant>
+	-->
 	<instant group="attack" spellid="56" name="Wrath of Nature" words="exevo gran mas tera" level="55" mana="700" premium="1" selftarget="1" cooldown="40000" groupcooldown="4000" needlearn="0" script="attack/wrath_of_nature.lua">
 		<vocation name="Druid" />
 		<vocation name="Elder Druid" />

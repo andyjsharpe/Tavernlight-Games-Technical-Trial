@@ -10,13 +10,13 @@
 
 - The answers to questions 1-4 are in a folder named "Answers", with each question having its own file (EX: "Q1.lua").
 
-- The answer to question 5 can be found at .
+- The answer to question 5 can be found at /data/spells/scripts/attack/Q5.lua with some changes in /data/spells/spells.xml. It is only partially complete at the moment, but a video of my current progress can be seen in the Answers folder in the file "Q5 In Progress.mp4".
 
-- The answer to question 6 can be found at .
+- The answer to question 6 is not yet complete.
 
-- The answer to question 7 can be found at .
+- The answer to question 7 is not yet complete.
 
-### Contact Informatoin
+### Contact Information
 
 - For any questions feel free to reach me at ajsusa1@gmail.com.
 
