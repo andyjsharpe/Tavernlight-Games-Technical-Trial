@@ -62,7 +62,7 @@
 		<vocation name="Master Sorcerer" />
 	</instant>
 	<!-- Values changed to have low requirements to make testing easier -->
-	<instant group="attack" name="Question 5" words="q5" level="0" mana="10" selftarget="1" cooldown="8000" groupcooldown="2000" needlearn="0" script="attack/Q5.lua">
+	<instant group="attack" name="Question 5" words="frigo" level="0" mana="10" selftarget="1" cooldown="4000" groupcooldown="2000" needlearn="0" script="attack/Q5.lua">
 		<vocation id="0"/>
 		<vocation id="1"/>
 		<vocation id="2"/>
@@ -77,9 +77,16 @@
 		<vocation name="Druid" />
 		<vocation name="Elder Druid" />
 	</instant>
-	<instant group="attack" spellid="118" name="Eternal Winter" words="exevo gran mas frigo" level="60" mana="1050" premium="1" selftarget="1" cooldown="40000" groupcooldown="4000" needlearn="0" script="attack/eternal_winter.lua">
-		<vocation name="Druid" />
-		<vocation name="Elder Druid" />
+	<instant group="attack" spellid="118" name="Eternal Winter" words="exevo gran mas frigo" level="0" mana="10" premium="0" selftarget="1" cooldown="4000" groupcooldown="4000" needlearn="0" script="attack/eternal_winter.lua">
+		<vocation id="0"/>
+		<vocation id="1"/>
+		<vocation id="2"/>
+		<vocation id="3"/>
+		<vocation id="4"/>
+		<vocation id="5"/>
+		<vocation id="6"/>
+		<vocation id="7"/>
+		<vocation id="8"/>
 	</instant>
 	<instant group="attack" spellid="111" name="Ethereal Spear" words="exori con" level="23" mana="25" premium="1" range="7" needtarget="1" cooldown="2000" groupcooldown="2000" blockwalls="1" needlearn="0" script="attack/ethereal_spear.lua">
 		<vocation name="Paladin" />

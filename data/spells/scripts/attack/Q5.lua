@@ -1,150 +1,198 @@
--- My method is partially based on this post: https://otland.net/threads/tfs-1-x-animated-spells-dynamic-vs-static.268186/
+--[[
+	My general methodology for this spell is to pre-calculate a number of randomized "frames"
+	for the spell to be in, then to set up a number of events which apply combat and visual effects
+	when it is time for each frame to occur.
+	
+	I decided to decouple the combat and visual effects as I did not know if one may want to also have
+	the damage randomly applyed to tiles like the visual effects area, or if the visuals are just
+	flair and the damage is meant to be applied uniformly. As of now the damage and visuals
+	are aligned, but switching the code so that is not the case should be easy and is explained in a
+	comment lower down in this file where the createCombatArea function is used.
+]]--
 
--- These masks represent the areas that the tornados can cover
-local smallTornadoMask = {
-	{0, 0, 0, 1, 0, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0},
-	{0, 1, 0, 1, 0, 1, 0},
-	{0, 0, 0, 0, 0, 0, 0},
-	{0, 1, 0, 1, 0, 1, 0},
-	{0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 0, 1, 0, 0, 0}
+
+--[[ PARAMETERS: Use these to control how the spell's animation behaves ]]------------------------------
+
+-- The number of animation frames (this is how many times damage is applied and visuals are changed)
+local TOTAL_FRAMES = 20
+
+-- How long we consider a frame to be in ms (this is how often damage applies and visuals change)
+local FRAME_LENGTH = 200
+
+-- The length of a effect animation in ms (in this case a tornado appearing and dissapearing)
+local ANIM_LENGTH = 800
+
+--[[
+	This represents the damage done over the entire spell duration for each space,
+	so they should equal the damage for a single hit multiplied by the TOTAL_FRAMES value.
+	The reason I did it this way is because I felt that it is more important for designers to
+	consider the total damage output of a spell rather than each indivisual hit for a multi-frame
+	attack such as this.
+
+	As I am not yet familiar with how damage calculations are made I just have these values for now
+	which are used to set the COMBAT_FORMULA_LEVELMAGIC formula later in the file. The spell still
+	applies damage in-game so I believe this is acceptable for the time being
+]]--
+local MIN_TOTAL_DAMAGE = 50
+local MAX_TOTAL_DAMAGE = 100
+
+-- How much falloff the ramp up/down of the animation has
+--[[
+	Higher values have less falloff, lower values have more
+	Look at the getCutoff function for more info about what this does
+	I set it to 2 since that seems to work well, but you can use any even positive number
+]]--
+local ANIMATION_FALLOFF = 2
+
+-- The damage area for the spell, this code assumes the table will be square (same width and height)
+-- I made this a bit bigger than in the example to make it easier to see the randomness
+local DAMAGE_AREA = {
+	{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0},
+	{0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0},
+	{0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0},
+	{0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0},
+	{0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+	{1, 1, 1, 1, 1, 3, 1, 1, 1, 1, 1},
+	{0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0},
+	{0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0},
+	{0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0},
+	{0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0},
+	{0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0}
 }
 
-local bigTornadoMask = {
-	{0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 1, 0, 1, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0},
-	{1, 0, 1, 0, 1, 0, 1},
-	{0, 0, 0, 0, 0, 0, 0},
-	{0, 0, 1, 0, 1, 0, 0},
-	{0, 0, 0, 0, 0, 0, 0}
-}
 
--- Makes it so that only the values in the area which also have mask values are used
-local function applyMaskToArea(area, mask, size)
-	local newArea = {
-		{0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0},
-		{0, 0, 0, 0, 0, 0, 0}
-	}
-	for a=1,size do
-		for b=1,size do
-			local maskVal = mask[a][b]
-			if maskVal ~= 0 then
-				-- Masking with multiplication should be fast enough, though a comparison may be faster
-				newArea[a][b] = area[a][b] * maskVal;
-			end
-		end
-	end
-	return newArea
-end
+--[[ HELPER FUNCTIONS ]]------------------------------------------------------------------------------
 
--- Used to interpolate the probability of tornados appearing
+-- This function is used to interpolate the probability of tornados appearing
+-- depending on how far into the spell we are
 -- Equation created in Desmos at: https://www.desmos.com/calculator/soyrxugvjn
--- The exponent controls the falloff, should be an int to work properly
 local function getCutoff(normalizedCompletion, exponent)
 	local toPower = 1 - 2 * normalizedCompletion
-	-- Since the power function in Lua is depreciated, I am calculating using a loop instead
+	-- Since the Math.Pow function in Lua is depreciated, I am calculating the
+	-- power using a loop instead just to be safe
 	local product = 1
-	for z=1,exponent do
+	for i=1,exponent do
 		product = product * toPower
 	end
 	return 1 - product
 end
 
--- Setup the combat arrays
-local smallTornadoCombats = {}
-local bigTornadoCombats = {}
+-- Executes combat and visual effects after validation
+-- This is intended to be used in an addEvent call
+function executeCombat(data, combat, effectArea)
+	local player = data.player
+	local variant = data.variant
 
--- The number of animation frames (equal to the length of the tornado arrays)
-local totalFrames = 8
+	-- Validate the player
+    if not player then
+        return false
+    end
+    if not player:isPlayer() then
+        return false
+    end
 
--- How long we consider a frame to be in ms
-local frameLength = 200
+	-- Executes the combat
+    combat:execute(player, variant)
 
--- Damage values are hardcoded for now
-local min = 20
-local max = 50
+	-- Create the spell effects
+	local areaSize = #effectArea
+	local playerPos = player:getPosition()
+	local centerOffset = math.ceil(areaSize / 2)
 
--- Pre-calculate the combat data for the spell on each timestep
-for i = 1, totalFrames do
-	local completion = i / (totalFrames + 1)
+	for j=1,areaSize do
+		for k=1,areaSize do
+			if effectArea[j][k] ~= 0 then
+				local spellPos = playerPos + Position(j - centerOffset, k - centerOffset, 0)
+				spellPos:sendMagicEffect(CONST_ME_ICETORNADO)
+			end
+		end
+	end
+end
 
-	-- Exponent is hardcoded to 2 since that seems to work well
-	local cutoff = getCutoff(completion, 2)
-	-- print(i .. "/" .. totalFrames .. ": " .. completion .. ": " .. cutoff)
+-- Used to deep copy the DAMAGE_AREA for each frame to be modified
+local function copyArea(area)
+	local areaSize = #area
+	local newArea = {}
+	for j=1,areaSize do
+		local row = {}
+		for k=1,areaSize do
+			row[k] = area[j][k]
+		end
+		newArea[j] = row
+	end
+	return newArea
+end
 
-	-- Create a new random area
-	local area = {
-		{0, 0, 0, 1, 0, 0, 0},
-		{0, 0, 1, 0, 1, 0, 0},
-		{0, 1, 0, 1, 0, 1, 0},
-		{1, 0, 1, 0, 1, 0, 1},
-		{0, 1, 0, 1, 0, 1, 0},
-		{0, 0, 1, 0, 1, 0, 0},
-		{0, 0, 0, 1, 0, 0, 0}
-	}
-	-- The area size is hardcoded for now, in the future it could be made to be more generic
-	-- if it would be helpful elsewhere
-	local size = 7
 
-	for k=1,size do
-		for j=1,size do
-			if area[k][j] ~= 0 then
+--[[ PRE-CALCULATE FRAME DATA ]]---------------------------------------------------------------
+
+-- How much to reduce the probability of an attack effect to correct for animation overlap
+local animOverlapCorrection = FRAME_LENGTH / ANIM_LENGTH
+
+-- Setup the combat and effect tables
+local tornadoCombats = {}
+local tornadoEffects = {}
+
+local areaSize = #DAMAGE_AREA
+
+local minDamagePerFrame = -MIN_TOTAL_DAMAGE / TOTAL_FRAMES
+local maxDamagePerFrame = -MAX_TOTAL_DAMAGE / TOTAL_FRAMES
+
+-- Pre-calculate each frame's data
+for i = 1, TOTAL_FRAMES do
+	local completion = i / (TOTAL_FRAMES + 1)
+
+	-- Calculates the probability of an attack effect occuring this frame
+	local cutoff = getCutoff(completion, ANIMATION_FALLOFF) * animOverlapCorrection
+
+	local effectArea = copyArea(DAMAGE_AREA)
+	
+	-- Randomize the effect area
+	for j=1,areaSize do
+		for k=1,areaSize do
+			local positionValue = effectArea[j][k]
+			if positionValue ~= 0 then
 				-- If the random value chosen is higher than the cutoff,
 				-- then do not spawn a torando at that location
 				local randomVal = math.random()
 				if randomVal > cutoff then
-					area[k][j] = 0
+					if positionValue == 1 then
+						effectArea[j][k] = 0
+					else
+						-- If this is the casting position, change it from 3 to 2
+						effectArea[j][k] = 2
+					end
 				end
 			end
 		end
 	end
 
-	-- Add the small torando attack
-	local smallTornadoCombat = Combat()
-	smallTornadoCombat:setParameter(COMBAT_PARAM_TYPE, COMBAT_ENERGYDAMAGE)
-	smallTornadoCombat:setParameter(COMBAT_PARAM_EFFECT, CONST_ME_HITAREA)
-	smallTornadoCombat:setFormula(COMBAT_FORMULA_LEVELMAGIC, 0, -min, 0, -max)
-	local maskedAreaSmall = applyMaskToArea(area, smallTornadoMask, size)
-	smallTornadoCombat:setArea(createCombatArea(maskedAreaSmall))
+	-- Save this frame's effect
+	tornadoEffects[i] = effectArea
 
-	smallTornadoCombats[i] = smallTornadoCombat
+	-- Add the torando combat for this frame
+	local tornadoCombat = Combat()
+	tornadoCombat:setParameter(COMBAT_PARAM_TYPE, COMBAT_ICEDAMAGE)
+	tornadoCombat:setFormula(COMBAT_FORMULA_LEVELMAGIC, 0, minDamagePerFrame, 0, maxDamagePerFrame)
 
-	-- Add the big torando attack
-	local bigTornadoCombat = Combat()
-	bigTornadoCombat:setParameter(COMBAT_PARAM_TYPE, COMBAT_ENERGYDAMAGE)
-	smallTornadoCombat:setParameter(COMBAT_PARAM_EFFECT, CONST_ME_ENERGYHIT)
-	bigTornadoCombat:setFormula(COMBAT_FORMULA_LEVELMAGIC, 0, -min, 0, -max)
-	local maskedAreaBig = applyMaskToArea(area, bigTornadoMask, size)
-	bigTornadoCombat:setArea(createCombatArea(maskedAreaBig))
+	-- If you want to seperate the damage and visual effects, use damageArea instead of
+	-- effectArea in the following line
+	tornadoCombat:setArea(createCombatArea(effectArea))
 
-	bigTornadoCombats[i] = bigTornadoCombat
+	-- Save this frame's conbat info
+	tornadoCombats[i] = tornadoCombat
 end
 
--- Checks that everything is still valid when the damage is applied in the future
-function executeCombat(data, combat)
-    if not data.player then
-        return false
-    end
-    if not data.player:isPlayer() then
-        return false
-    end
-    combat:execute(data.player, data.var)
-end
 
+--[[ SPELL CASTING FUNCTION ]]-------------------------------------------------------------------------
+
+-- When the spell is cast add events to represent the spell frames
 function onCastSpell(creature, variant)
-	local data = {player = creature, var = variant}
-	-- Add the combat events
-	for l = 1, totalFrames do
-		local deltaFromStart = l * frameLength
-		addEvent(executeCombat, deltaFromStart, data, smallTornadoCombats[l])
-		addEvent(executeCombat, deltaFromStart, data, bigTornadoCombats[l])
+	-- I am putting the data in a dict to avoid locality arrors
+	local data = {player = creature, variant = variant}
+	for i = 1, TOTAL_FRAMES do
+		local timeFromStart = i * FRAME_LENGTH
+		addEvent(executeCombat, timeFromStart, data, tornadoCombats[i], tornadoEffects[i])
 	end
 	
 	return true

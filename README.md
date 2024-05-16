@@ -10,7 +10,7 @@
 
 - The answers to questions 1-4 are in a folder named "Answers", with each question having its own file (EX: "Q1.lua").
 
-- The answer to question 5 can be found at /data/spells/scripts/attack/Q5.lua with some changes in /data/spells/spells.xml. It is only partially complete at the moment, but a video of my current progress can be seen in the Answers folder in the file "Q5 In Progress.mp4".
+- The code for question 5 can be found at /data/spells/scripts/attack/Q5.lua with some changes in /data/spells/spells.xml. A video of the spell working in game can be found in the Answers folder under the name "Q5.mp4". Details about my implementation choices can be found within the comments in the previously mentioned Q5.lua script.
 
 - The answer to question 6 is not yet complete.
 
