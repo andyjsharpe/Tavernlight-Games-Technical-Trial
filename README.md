@@ -14,7 +14,7 @@
 
 - The answer to question 6 is not yet complete.
 
-- The answer to question 7 is not yet complete.
+- The files for question 7 can be found in the folder /otclient/modules/game_jumpmenu
 
 ### Contact Information
 
