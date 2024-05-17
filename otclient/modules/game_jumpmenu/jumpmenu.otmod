@@ -1,0 +1,9 @@
+Module
+  name: game_jumpmenu
+  description: View available spells
+  author: Sharpe, Andy
+  website: https://github.com/andyjsharpe/Tavernlight-Games-Technical-Trial
+  sandboxed: true
+  scripts: [ jumpmenu ]
+  @onLoad: init()
+  @onUnload: terminate()

@@ -1,0 +1,27 @@
+JumpMenuLabel < Label
+  font: verdana-11px-monochrome
+  background-color: alpha
+  text-offset: 42 3
+  focusable: true
+  height: 36
+  image-clip: 0 0 32 32
+  image-size: 32 32
+  image-offset: 2 2
+  image-source: /images/game/topbuttons/hotkeys
+
+  $focus:
+    background-color: #ffffff22
+    color: #ffffff
+
+MainWindow
+  id: jumpmenuWindow
+  size: 550 400
+  @onEscape: toggle()
+
+  Button
+    id: buttonJump
+    !text: tr('Jump!')
+    width: 64
+    anchors.right: parent.right
+    anchors.bottom: parent.bottom
+    @onClick: doJump()

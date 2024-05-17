@@ -2,7 +2,7 @@
 
 ### Environment
 
-- As proof of a proper envirionment setup I have included the files for theforgottenserver and the otclient with the proper configuration as a part of the repository.
+- As proof of a proper envirionment setup I have included the files for theforgottenserver and otclient with proper configurations as a part of the repository.
 
 - While not included in this repo, I used the OTClient with the Tibia 1098 client version for validation of my solutions.
 
@@ -14,7 +14,7 @@
 
 - The answer to question 6 is not yet complete.
 
-- The files for question 7 can be found in the folder /otclient/modules/game_jumpmenu
+- The files for question 7 can be found in the folder /otclient/modules/game_jumpmenu, with the main file being "jumpmenu.lua".  A video of the menu working in game can be found in the Answers folder under the name "Q7.mp4". Details about my implementation choices can be found within the comments in the previously mentioned files.
 
 ### Contact Information
 
